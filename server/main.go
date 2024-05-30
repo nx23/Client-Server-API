@@ -43,7 +43,7 @@ func (s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/":
         s.HomeHandler(w, r)
 	case "/cotacao":
-        s.Cotacao(w, r)
+        s.CotacaoHandler(w, r)
 	default:
         http.NotFound(w, r)
 	}
@@ -53,11 +53,11 @@ func (s server) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	  w.Write([]byte(s.welcomeMessage))
 }
 
-func (s server) Cotacao(w http.ResponseWriter, r *http.Request) {
-    ultimaCotacao, error := BuscaCotacao()
-    if error != nil {
+func (s server) CotacaoHandler(w http.ResponseWriter, r *http.Request) {
+    ultimaCotacao, err := BuscaCotacao()
+    if err != nil {
         w.WriteHeader(http.StatusBadRequest)
-        fmt.Fprintf(os.Stderr, "Erro ao fazer requisição: %v\n", error)
+        fmt.Fprintf(os.Stderr, "Erro ao fazer requisição: %v\n", err)
     }
 
     resposta := RespostaCotacao{
@@ -70,21 +70,21 @@ func (s server) Cotacao(w http.ResponseWriter, r *http.Request) {
 }
 
 func BuscaCotacao() (*Cotacao, error) {
-    resp, error := http.Get("https://economia.awesomeapi.com.br/json/last/USD-BRL")
-    if error != nil {
-        return nil, error
+    resp, err := http.Get("https://economia.awesomeapi.com.br/json/last/USD-BRL")
+    if err != nil {
+        return nil, err
     }
     defer resp.Body.Close()
 
-    body, error := io.ReadAll(resp.Body)
-    if error != nil {
-        return nil, error
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
     }
 
     var cotacao Cotacao
-    error = json.Unmarshal(body, &cotacao)
-    if error != nil {
-        return nil, error
+    err = json.Unmarshal(body, &cotacao)
+    if err != nil {
+        return nil, err
     }
 
     return &cotacao, nil
