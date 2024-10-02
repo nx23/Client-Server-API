@@ -14,8 +14,9 @@ func main() {
 	port := ":8080"
 	mux := http.NewServeMux()
 
-	mux.Handle("/", server{welcomeMessage: "Bem vindo a minha API de Cotacao"})
-	mux.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) { panic("panic") })
+	mux.HandleFunc("GET /", HomeHandler)
+	mux.HandleFunc("GET /cotacao", CotacaoHandler)
+	mux.HandleFunc("GET /panic", func(w http.ResponseWriter, r *http.Request) { panic("panic") })
 	
 	log.Printf("Listening on %s\n", port)
 
@@ -44,10 +45,6 @@ type RespostaCotacao struct {
 	Cambio string `json:"cambio"`
 }
 
-type server struct {
-	welcomeMessage string
-}
-
 func PanicRecoverMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -62,22 +59,11 @@ func PanicRecoverMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
-		s.HomeHandler(w, r)
-	case "/cotacao":
-		s.CotacaoHandler(w, r)
-	default:
-		http.NotFound(w, r)
-	}
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Bem vindo a minha API de Cotacao"))
 }
 
-func (s server) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(s.welcomeMessage))
-}
-
-func (s server) CotacaoHandler(w http.ResponseWriter, r *http.Request) {
+func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 	ultimaCotacao, err := BuscaCotacao()
 	if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
